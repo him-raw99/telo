@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test / coverage
+coverage/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Yarn
+.yarn/cache/
+.yarn/install-state.gz
+.pnp.*
+
+# Editor / OS
+.DS_Store
+*.log
+
+# Infra runtime data (Days 5-7) — never commit telemetry stores
+infra/**/data/
+grafana/data/
+loki/data/
+tempo/data/
+prometheus/data/
+
+specs
+
+settings.local.json

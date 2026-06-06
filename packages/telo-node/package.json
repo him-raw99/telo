@@ -1,0 +1,63 @@
+{
+  "name": "@telo/node",
+  "version": "0.1.0",
+  "description": "Telemetry collection, made super easy — one line for any Node.js app.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "opentelemetry",
+    "otel",
+    "telemetry",
+    "observability",
+    "tracing",
+    "metrics",
+    "logs",
+    "nodejs"
+  ],
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/resources": "^2.7.1",
+    "@opentelemetry/sdk-trace-base": "^2.7.1",
+    "@opentelemetry/semantic-conventions": "^1.41.1",
+    "@opentelemetry/sdk-node": "^0.218.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.218.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.218.0",
+    "@opentelemetry/instrumentation-http": "^0.218.0",
+    "@opentelemetry/instrumentation-express": "^0.66.0",
+    "@opentelemetry/instrumentation-pg": "^0.70.0",
+    "@opentelemetry/instrumentation-redis": "^0.66.0",
+    "@opentelemetry/instrumentation-mongoose": "^0.64.0",
+    "@opentelemetry/instrumentation-dns": "^0.61.0",
+    "@opentelemetry/instrumentation-kafkajs": "^0.27.0",
+    "@opentelemetry/instrumentation-amqplib": "^0.65.0",
+    "@opentelemetry/instrumentation-runtime-node": "^0.31.0"
+  }
+}

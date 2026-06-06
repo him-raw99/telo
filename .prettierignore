@@ -1,0 +1,10 @@
+# Build output & deps
+dist/
+node_modules/
+coverage/
+
+# Lockfile
+yarn.lock
+
+# Prose docs are hand-authored — don't let Prettier reflow them
+*.md
