@@ -19,7 +19,6 @@ const DEFAULT_SAMPLE_RATE = 1.0
  * - `env`          → `process.env.NODE_ENV` (falls back to `'unknown'`)
  * - `sampleRate`   → `1.0`
  * - `ignoreRoutes` → `[]`
- * - `instruments`  → `{}`
  */
 export const teloConfigSchema = z.object({
   service: z
@@ -48,16 +47,6 @@ export const teloConfigSchema = z.object({
     .array(z.string())
     .default([])
     .describe('HTTP routes to skip instrumenting (consumed by the instrumentations layer).'),
-
-  instruments: z
-    .object({
-      /** Enable the kafkajs instrumentation. */
-      kafka: z.boolean().optional(),
-      /** Enable the amqplib (RabbitMQ) instrumentation. */
-      rabbitmq: z.boolean().optional(),
-    })
-    .default({})
-    .describe('Opt-in instrumentations that are off by default.'),
 })
 
 /**
@@ -71,7 +60,6 @@ export const teloConfigSchema = z.object({
  * @property env          Deployment environment. Default `process.env.NODE_ENV`.
  * @property sampleRate   Root-span sample rate, 0..1. Default `1.0`.
  * @property ignoreRoutes HTTP routes to skip instrumenting. Default `[]`.
- * @property instruments  Opt-in instrumentations (`kafka`, `rabbitmq`). Default `{}`.
  *
  * @example
  * ```ts

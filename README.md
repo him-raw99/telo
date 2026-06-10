@@ -77,7 +77,6 @@ require('@telo/node').init({
   env: 'production',                   // default: process.env.NODE_ENV
   sampleRate: 0.1,                     // default: 1.0
   ignoreRoutes: ['/health', '/ready'], // default: []
-  instruments: { kafka: true, rabbitmq: true }, // both default: false
 })
 
 // Manual span wrapper for custom work — records exceptions,
@@ -90,9 +89,9 @@ Every config key also has an env var (`TELO_SERVICE`, `TELO_ENDPOINT`, `TELO_ENV
 
 **Written in TypeScript — CommonJS or ESM.** `@telo/node` is written in TypeScript and ships both builds with bundled type declarations — `require('@telo/node')` and `import { init, span } from '@telo/node'` (or a default `import telo from '@telo/node'`) all work, fully typed. The must-load-first rule below applies either way.
 
-**Auto-instrumented:** HTTP, Express, pg, redis, mongoose, dns.
-**Opt-in:** kafkajs, amqplib.
-**Off by default:** fs (too noisy).
+**Traced automatically — zero config, no flags:** HTTP, Express, pg, redis, mongoose, dns — *and* kafkajs (Kafka) and amqplib (RabbitMQ). Messaging libraries are picked up dynamically: the instrumentation is always registered but stays silent until your app actually loads the library, so you get Kafka/RabbitMQ traces the moment you use them and pay nothing if you don't.
+**Runtime metrics, always on:** heap, GC pause, event-loop lag, active handles (feeds the Runtime Health dashboard).
+**Deliberately off:** `fs` — too noisy to be useful.
 
 > ⚠️ **Must load first.** `init()` has to run before any other `require`/`import` — OTel patches libraries at load time. Telo warns at startup if it detects Express/pg/etc. were loaded first (load-order auto-detection is CommonJS-only today — see Roadmap).
 

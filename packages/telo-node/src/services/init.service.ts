@@ -1,4 +1,4 @@
-import { teloConfigSchema, type TTeloConfig } from '../validator/config.validator';
+import { teloConfigSchema, type TTeloConfig } from '../validator/config.validator'
 
 /**
  * Initialize Telo.
@@ -18,7 +18,7 @@ import { teloConfigSchema, type TTeloConfig } from '../validator/config.validato
  * ```
  */
 export function init(config: TTeloConfig): void {
-  const resolved = teloConfigSchema.parse(config);
+  const resolved = teloConfigSchema.parse(config)
 
   // SDK wiring (Resource, NodeSDK, exporters, lifecycle) is not implemented yet.
   void resolved
