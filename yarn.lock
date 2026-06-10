@@ -592,6 +592,24 @@
     "@opentelemetry/instrumentation" "^0.218.0"
     "@opentelemetry/semantic-conventions" "^1.33.0"
 
+"@opentelemetry/instrumentation-mysql2@^0.64.0":
+  version "0.64.0"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-mysql2/-/instrumentation-mysql2-0.64.0.tgz#5c07bf4feedc6c071601b55e5d077d423eb26289"
+  integrity sha512-yTu0mYh/qJPSE86VmNLQww5uugDyvCS2KJIPfPtIk2ufoEUoHPsV6Iynnvmz588Moq04aBLxfTa/EtE4A2ykWA==
+  dependencies:
+    "@opentelemetry/instrumentation" "^0.218.0"
+    "@opentelemetry/semantic-conventions" "^1.33.0"
+    "@opentelemetry/sql-common" "^0.41.2"
+
+"@opentelemetry/instrumentation-mysql@^0.64.0":
+  version "0.64.0"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-mysql/-/instrumentation-mysql-0.64.0.tgz#e6b58945b6182c597bfc4111f0760789097eef4d"
+  integrity sha512-W1w76AJkP7i0uzzAe7nsCMWq4+EMSA550f1lAmxDPdQC5FnreNbRIm/tod2OS9gVrYvRrQXNkFmZJKGo4kzCnw==
+  dependencies:
+    "@opentelemetry/instrumentation" "^0.218.0"
+    "@opentelemetry/semantic-conventions" "^1.33.0"
+    "@types/mysql" "2.15.27"
+
 "@opentelemetry/instrumentation-pg@^0.70.0":
   version "0.70.0"
   resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-pg/-/instrumentation-pg-0.70.0.tgz#f5e16a78e4432c52a07971ce1acf1aac2a19eab4"
@@ -958,6 +976,13 @@
   version "7.0.15"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.15.tgz#596a1747233694d50f6ad8a7869fcb6f56cf5841"
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
+
+"@types/mysql@2.15.27":
+  version "2.15.27"
+  resolved "https://registry.yarnpkg.com/@types/mysql/-/mysql-2.15.27.tgz#fb13b0e8614d39d42f40f381217ec3215915f1e9"
+  integrity sha512-YfWiV16IY0OeBfBCk8+hXKmdTKrKlwKN1MNKAPBu5JYxLwBEZl7QzeEpGnlZb3VMGJrrGmB84gXiH+ofs/TezA==
+  dependencies:
+    "@types/node" "*"
 
 "@types/node@*", "@types/node@>=13.7.0", "@types/node@^25.9.2":
   version "25.9.2"

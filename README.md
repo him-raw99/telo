@@ -85,11 +85,25 @@ const { span } = require('@telo/node')
 const result = await span('invoice.process', () => processInvoice(id))
 ```
 
+### Flushing before exit
+
+Telemetry is buffered and flushed in batches, so the last few seconds can be lost if the process exits without flushing. Telo never touches process signals — if you want a final flush, `await shutdown()` before you exit:
+
+```js
+const { shutdown } = require('@telo/node')
+
+process.on('SIGTERM', async () => {
+  // …your own cleanup…
+  await shutdown() // flush pending telemetry
+  process.exit(0)
+})
+```
+
 Every config key also has an env var (`TELO_SERVICE`, `TELO_ENDPOINT`, `TELO_ENV`, `TELO_SAMPLE_RATE`) so it works in Docker/K8s with zero code changes.
 
 **Written in TypeScript — CommonJS or ESM.** `@telo/node` is written in TypeScript and ships both builds with bundled type declarations — `require('@telo/node')` and `import { init, span } from '@telo/node'` (or a default `import telo from '@telo/node'`) all work, fully typed. The must-load-first rule below applies either way.
 
-**Traced automatically — zero config, no flags:** HTTP, Express, pg, redis, mongoose, dns — *and* kafkajs (Kafka) and amqplib (RabbitMQ). Messaging libraries are picked up dynamically: the instrumentation is always registered but stays silent until your app actually loads the library, so you get Kafka/RabbitMQ traces the moment you use them and pay nothing if you don't.
+**Traced automatically — zero config, no flags:** HTTP, Express, pg, mysql/mysql2, redis, mongoose, dns — *and* kafkajs (Kafka) and amqplib (RabbitMQ). Messaging libraries are picked up dynamically: the instrumentation is always registered but stays silent until your app actually loads the library, so you get Kafka/RabbitMQ traces the moment you use them and pay nothing if you don't.
 **Runtime metrics, always on:** heap, GC pause, event-loop lag, active handles (feeds the Runtime Health dashboard).
 **Deliberately off:** `fs` — too noisy to be useful.
 

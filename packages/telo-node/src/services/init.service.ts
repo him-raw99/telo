@@ -1,15 +1,21 @@
-import { teloConfigSchema, type TTeloConfig } from '../validator/config.validator'
+import { resolveConfig } from '../config/resolve'
+import { startTelemetry } from '../sdk'
+import type { TTeloConfig } from '../validator/config.validator'
 
 /**
- * Initialize Telo.
+ * Initialize Telo: validate config, then boot the OpenTelemetry SDK.
  *
  * Must be called **before** any other `require`/`import`, because OpenTelemetry
- * patches libraries at load time. The config is validated and normalized via
- * {@link teloConfigSchema} (defaults applied, `service` required) before any SDK
- * wiring runs.
+ * patches libraries at load time; Telo warns at startup if it detects an
+ * instrumented library was loaded first. Config precedence is `init()` arg →
+ * `TELO_*` env var → default, so this can be called with no arguments as long
+ * as `TELO_SERVICE` is set.
  *
- * @param config - Telo configuration. See {@link TTeloConfig}.
- * @throws {import('zod').ZodError} If the configuration is invalid.
+ * Idempotent: a second call warns once and is otherwise a no-op.
+ *
+ * @param config - Telo configuration. See {@link TTeloConfig}. Optional when the
+ *   required `service` is supplied via `TELO_SERVICE`.
+ * @throws {import('zod').ZodError} If the resolved configuration is invalid.
  *
  * @example
  * ```ts
@@ -17,9 +23,7 @@ import { teloConfigSchema, type TTeloConfig } from '../validator/config.validato
  * init({ service: 'checkout-api' })
  * ```
  */
-export function init(config: TTeloConfig): void {
-  const resolved = teloConfigSchema.parse(config)
-
-  // SDK wiring (Resource, NodeSDK, exporters, lifecycle) is not implemented yet.
-  void resolved
+export function init(config?: TTeloConfig): void {
+  const resolvedConfig = resolveConfig(config)
+  startTelemetry(resolvedConfig)
 }

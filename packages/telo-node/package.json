@@ -53,6 +53,8 @@
     "@opentelemetry/instrumentation-http": "^0.218.0",
     "@opentelemetry/instrumentation-express": "^0.66.0",
     "@opentelemetry/instrumentation-pg": "^0.70.0",
+    "@opentelemetry/instrumentation-mysql": "^0.64.0",
+    "@opentelemetry/instrumentation-mysql2": "^0.64.0",
     "@opentelemetry/instrumentation-redis": "^0.66.0",
     "@opentelemetry/instrumentation-mongoose": "^0.64.0",
     "@opentelemetry/instrumentation-dns": "^0.61.0",
