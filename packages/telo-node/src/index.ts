@@ -1,24 +1,11 @@
-import type { TTeloConfig } from "./types/config"
+import { init } from './services/init.service'
+import { span } from './services/span.service'
+import { traced } from './services/traced.service'
 
-/**
- * Initialize Telo. Must be called before any other require/import,
- * because OpenTelemetry patches libraries at load time.
- */
-export function init(config: TTeloConfig): void {
-  // no-op (Day 2+)
-  void config
-}
-
-/**
- * Wrap custom work in a span. Records exceptions, sets ERROR status,
- * and ends the span automatically. Currently a passthrough.
- */
-export function span<T>(name: string, fn: () => T): T {
-  // no-op passthrough (Day 4)
-  void name
-  return fn()
-}
+// Named exports: tree-shakeable and ergonomic for ESM/TS consumers.
+export { init, span, traced }
+export type { TTeloConfig, TResolvedTeloConfig } from './validator/config.validator'
 
 // Default export so `import telo from '@telo/node'` and
 // `require('@telo/node').init(...)` both work.
-export default { init, span }
+export default { init, span, traced }
