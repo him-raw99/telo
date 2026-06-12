@@ -19,7 +19,7 @@ import type { TTeloConfig } from '../validator/config.validator'
  *
  * @example
  * ```ts
- * import { init } from '@telo/node'
+ * import { init } from 'telo'
  * init({ service: 'checkout-api' })
  * ```
  */

@@ -5,8 +5,9 @@ import { shutdownTelemetry as shutdown } from './sdk'
 
 // Named exports: tree-shakeable and ergonomic for ESM/TS consumers.
 export { init, span, traced, shutdown }
+export type { TSpanOptions } from './services/span.service'
 export type { TTeloConfig, TResolvedTeloConfig } from './validator/config.validator'
 
-// Default export so `import telo from '@telo/node'` and
-// `require('@telo/node').init(...)` both work.
+// Default export so `import telo from 'telo'` and
+// `require('telo').init(...)` both work.
 export default { init, span, traced, shutdown }

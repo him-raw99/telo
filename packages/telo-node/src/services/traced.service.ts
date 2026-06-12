@@ -1,5 +1,7 @@
 import { span } from './span.service'
 
+import type { TSpanOptions } from './span.service'
+
 /**
  * Higher-order companion to {@link span}: instead of running the work now, it
  * returns a **wrapped function** whose every call is traced under `name`.
@@ -8,12 +10,14 @@ import { span } from './span.service'
  * handy for free functions and handlers where a decorator can't be used. The
  * returned function preserves the original signature (arguments, `this`
  * binding, sync/async, and return type), and delegates to {@link span} so the
- * span semantics are identical with no duplicated logic.
+ * span semantics (OK/ERROR status, exception recording, timing) are identical
+ * with no duplicated logic.
  *
  * @typeParam TArgs - Tuple of `fn`'s argument types, preserved on the wrapper.
  * @typeParam TReturn - `fn`'s return type, preserved on the wrapper.
  * @param name - Span name applied to every invocation, e.g. `'invoice.process'`.
  * @param fn - The function to wrap.
+ * @param opts - Optional span options applied to every call's span.
  * @returns A function with the same signature as `fn`; each call opens a span.
  *
  * @example
@@ -24,9 +28,10 @@ import { span } from './span.service'
  */
 export function traced<TArgs extends unknown[], TReturn>(
   name: string,
-  fn: (...args: TArgs) => TReturn
+  fn: (...args: TArgs) => TReturn,
+  opts?: TSpanOptions
 ): (...args: TArgs) => TReturn {
   return function (this: unknown, ...args: TArgs): TReturn {
-    return span(name, () => fn.apply(this, args))
+    return span(name, () => fn.apply(this, args), opts)
   }
 }

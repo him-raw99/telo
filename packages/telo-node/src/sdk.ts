@@ -37,7 +37,7 @@ function detectServiceVersion(): string {
   } catch {
     // best-effort; a missing or malformed package.json is not an error here.
   }
-  return '1.0.0'
+  return 'unknown'
 }
 
 /**

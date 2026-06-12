@@ -14,7 +14,7 @@ Two independent pieces that work great together:
 
 | Piece | What it is | Drop-in cost |
 |---|---|---|
-| **`@telo/node`** | npm package for any Node.js / Express app | 1 line |
+| **`telo`** | npm package for any Node.js / Express app | 1 line |
 | **`telo/infra`** | `docker-compose` LGTM backend, dashboards pre-wired | 1 command |
 
 Each stands alone. The SDK speaks **OTLP**, so it also works with Grafana Cloud, Datadog, or any OTLP-compatible backend. The infra stack accepts telemetry from **any language**, not just Node.
@@ -26,12 +26,12 @@ Each stands alone. The SDK speaks **OTLP**, so it also works with Grafana Cloud,
 **App side (~30 seconds):**
 
 ```bash
-npm install @telo/node
+npm install telo
 ```
 
 ```js
 // must be the FIRST line, before any other require
-require('@telo/node').init({ service: 'my-app' })
+require('telo').init({ service: 'my-app' })
 
 const express = require('express')
 // ...rest of your app unchanged
@@ -51,7 +51,7 @@ docker-compose up -d
 ## How it works
 
 ```
-Node.js app (@telo/node)
+Node.js app (telo)
    │  OTLP HTTP: /v1/traces, /v1/metrics (every 10s), /v1/logs
    ▼
 OTel Collector  :4318
@@ -68,10 +68,10 @@ OTel Collector  :4318
 
 ```js
 // Minimal — all most apps need
-require('@telo/node').init({ service: 'payments-service' })
+require('telo').init({ service: 'payments-service' })
 
 // Full config
-require('@telo/node').init({
+require('telo').init({
   service: 'payments-service',         // required
   endpoint: 'http://localhost:4318',   // default
   env: 'production',                   // default: process.env.NODE_ENV
@@ -81,7 +81,7 @@ require('@telo/node').init({
 
 // Manual span wrapper for custom work — records exceptions,
 // sets ERROR status, and ends the span automatically
-const { span } = require('@telo/node')
+const { span } = require('telo')
 const result = await span('invoice.process', () => processInvoice(id))
 ```
 
@@ -90,7 +90,7 @@ const result = await span('invoice.process', () => processInvoice(id))
 Telemetry is buffered and flushed in batches, so the last few seconds can be lost if the process exits without flushing. Telo never touches process signals — if you want a final flush, `await shutdown()` before you exit:
 
 ```js
-const { shutdown } = require('@telo/node')
+const { shutdown } = require('telo')
 
 process.on('SIGTERM', async () => {
   // …your own cleanup…
@@ -101,7 +101,7 @@ process.on('SIGTERM', async () => {
 
 Every config key also has an env var (`TELO_SERVICE`, `TELO_ENDPOINT`, `TELO_ENV`, `TELO_SAMPLE_RATE`) so it works in Docker/K8s with zero code changes.
 
-**Written in TypeScript — CommonJS or ESM.** `@telo/node` is written in TypeScript and ships both builds with bundled type declarations — `require('@telo/node')` and `import { init, span } from '@telo/node'` (or a default `import telo from '@telo/node'`) all work, fully typed. The must-load-first rule below applies either way.
+**Written in TypeScript — CommonJS or ESM.** `telo` is written in TypeScript and ships both builds with bundled type declarations — `require('telo')` and `import { init, span } from 'telo'` (or a default `import telo from 'telo'`) all work, fully typed. The must-load-first rule below applies either way.
 
 **Traced automatically — zero config, no flags:** HTTP, Express, pg, mysql/mysql2, redis, mongoose, dns — *and* kafkajs (Kafka) and amqplib (RabbitMQ). Messaging libraries are picked up dynamically: the instrumentation is always registered but stays silent until your app actually loads the library, so you get Kafka/RabbitMQ traces the moment you use them and pay nothing if you don't.
 **Runtime metrics, always on:** heap, GC pause, event-loop lag, active handles (feeds the Runtime Health dashboard).
