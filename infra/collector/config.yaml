@@ -1,0 +1,60 @@
+# OpenTelemetry Collector — receives OTLP from apps and fans out to the
+# three backends: traces → Tempo, logs → Loki, metrics → a Prometheus
+# scrape endpoint.
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  # Drop data before the Collector OOMs rather than crashing the pipeline.
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  # Batch by time/size to cut per-request overhead to the backends.
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+exporters:
+  # Tempo accepts OTLP over gRPC on its own 4317; insecure is fine on the
+  # internal compose network.
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  # Loki ingests OTLP natively at /otlp; the standalone `loki` exporter was
+  # removed from the Collector, so we push to Loki's OTLP endpoint instead.
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+  # Expose collected metrics for Prometheus to scrape (pull bridge).
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion:
+      enabled: true
+
+extensions:
+  # Liveness endpoint on :13133 (/) — used by the compose healthcheck.
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]

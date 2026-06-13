@@ -1,0 +1,33 @@
+# Tempo — single-binary, filesystem-backed trace store. Receives traces from
+# the Collector over OTLP/gRPC and serves the query API on :3200.
+
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+ingester:
+  # Flush blocks promptly so traces become queryable quickly in a dev stack.
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    # Local-disk retention. Uncapped storage would fill the volume over time.
+    block_retention: 48h
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/blocks
+    wal:
+      path: /var/tempo/wal
+
+usage_report:
+  reporting_enabled: false
