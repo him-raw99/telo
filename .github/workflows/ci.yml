@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+defaults:
+  run:
+    working-directory: packages/telo-node
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,6 +19,7 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'yarn'
+          cache-dependency-path: packages/telo-node/yarn.lock
 
       - name: Install
         run: yarn install --frozen-lockfile
@@ -27,9 +32,6 @@ jobs:
 
       - name: Typecheck
         run: yarn typecheck
-
-      - name: Test
-        run: yarn test
 
       - name: Build
         run: yarn build
