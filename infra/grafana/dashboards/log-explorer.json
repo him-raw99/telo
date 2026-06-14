@@ -1,0 +1,73 @@
+{
+  "uid": "telo-log-explorer",
+  "title": "Log Explorer",
+  "description": "Loki logs filtered by service / level / trace ID. The trace_id filter is the landing target for the 'Logs for this span' link from Trace Explorer (Day 6 tracesToLogsV2). NOTE: level uses Loki's detected_level structured-metadata field; confirm against real SDK log output.",
+  "tags": ["telo"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "service",
+        "label": "Service",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": { "label": "service_name", "type": 1, "refId": "LokiVariableQueryEditor-VariableQuery", "stream": "" },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".+",
+        "current": { "text": "All", "value": "$__all" },
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "type": "custom",
+        "name": "level",
+        "label": "Level",
+        "query": "Any : .+, error : error, warn : warn, info : info, debug : debug",
+        "options": [
+          { "text": "Any", "value": ".+", "selected": true },
+          { "text": "error", "value": "error", "selected": false },
+          { "text": "warn", "value": "warn", "selected": false },
+          { "text": "info", "value": "info", "selected": false },
+          { "text": "debug", "value": "debug", "selected": false }
+        ],
+        "current": { "text": "Any", "value": ".+" }
+      },
+      {
+        "type": "textbox",
+        "name": "traceId",
+        "label": "Trace ID",
+        "query": ".+",
+        "current": { "text": ".+", "value": ".+" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "logs",
+      "title": "Logs",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 20, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{service_name=~\"$service\"} | detected_level=~\"$level\" | trace_id=~\"$traceId\"",
+          "queryType": "range"
+        }
+      ]
+    }
+  ]
+}

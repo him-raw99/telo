@@ -1,0 +1,134 @@
+{
+  "uid": "telo-runtime-health",
+  "title": "Runtime Health",
+  "description": "Node process internals from instrumentation-runtime-node: heap, GC pause, event-loop lag, active handles. NOTE: runtime metric names (v8js_*, nodejs_*) are the biggest unknowns in this set — instrumentation-runtime-node's Prometheus naming varies by version. Confirm every expr against live Prometheus before trusting these panels.",
+  "tags": ["telo"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "service",
+        "label": "Service",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": { "qryType": 1, "query": "label_values(http_server_duration_milliseconds_count, service_name)", "refId": "StandardVariableQuery" },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": { "text": "All", "value": "$__all" },
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "type": "query",
+        "name": "env",
+        "label": "Environment",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": { "qryType": 1, "query": "label_values(http_server_duration_milliseconds_count, deployment_environment)", "refId": "StandardVariableQuery" },
+        "includeAll": true,
+        "multi": false,
+        "allValue": ".*",
+        "current": { "text": "All", "value": "$__all" },
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Heap used vs limit",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "used",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (service_name) (v8js_memory_heap_used_bytes{service_name=~\"$service\", deployment_environment=~\"$env\"})",
+          "legendFormat": "{{service_name}} used"
+        },
+        {
+          "refId": "limit",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (service_name) (v8js_memory_heap_limit_bytes{service_name=~\"$service\", deployment_environment=~\"$env\"})",
+          "legendFormat": "{{service_name}} limit"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "GC pause p99",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.99, sum by (le, service_name) (rate(v8js_gc_duration_seconds_bucket{service_name=~\"$service\", deployment_environment=~\"$env\"}[5m])))",
+          "legendFormat": "{{service_name}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Event-loop delay p99",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (service_name) (nodejs_eventloop_delay_p99_seconds{service_name=~\"$service\", deployment_environment=~\"$env\"})",
+          "legendFormat": "{{service_name}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Event-loop utilization",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (service_name) (nodejs_eventloop_utilization{service_name=~\"$service\", deployment_environment=~\"$env\"})",
+          "legendFormat": "{{service_name}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Active handles / requests",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "handles",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (service_name) (nodejs_active_handles{service_name=~\"$service\", deployment_environment=~\"$env\"})",
+          "legendFormat": "{{service_name}} handles"
+        },
+        {
+          "refId": "requests",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (service_name) (nodejs_active_requests{service_name=~\"$service\", deployment_environment=~\"$env\"})",
+          "legendFormat": "{{service_name}} requests"
+        }
+      ]
+    }
+  ]
+}

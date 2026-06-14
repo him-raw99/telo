@@ -1,0 +1,71 @@
+{
+  "uid": "telo-trace-explorer",
+  "title": "Trace Explorer",
+  "description": "Search traces in Tempo by service / route / status / min-duration. Click a trace to open the waterfall; the Tempo datasource's tracesToLogsV2 (Day 6) provides the per-span 'Logs for this span' link.",
+  "tags": ["telo"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "service",
+        "label": "Service",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": { "qryType": 1, "query": "label_values(http_server_duration_milliseconds_count, service_name)", "refId": "StandardVariableQuery" },
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "type": "textbox",
+        "name": "route",
+        "label": "Route (regex)",
+        "query": ".*",
+        "current": { "text": ".*", "value": ".*" }
+      },
+      {
+        "type": "custom",
+        "name": "statusFilter",
+        "label": "Status",
+        "query": "Any : true, Error : status = error, OK : status = ok",
+        "options": [
+          { "text": "Any", "value": "true", "selected": true },
+          { "text": "Error", "value": "status = error", "selected": false },
+          { "text": "OK", "value": "status = ok", "selected": false }
+        ],
+        "current": { "text": "Any", "value": "true" }
+      },
+      {
+        "type": "textbox",
+        "name": "minDuration",
+        "label": "Min duration (ms)",
+        "query": "0",
+        "current": { "text": "0", "value": "0" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Matching traces",
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "gridPos": { "h": 20, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "tempo", "uid": "tempo" },
+          "queryType": "traceql",
+          "query": "{ resource.service.name =~ \"$service\" && span.http.route =~ \"$route\" && duration > ${minDuration}ms && ${statusFilter} }",
+          "limit": 100,
+          "tableType": "traces"
+        }
+      ]
+    }
+  ]
+}
