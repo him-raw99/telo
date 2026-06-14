@@ -55,7 +55,7 @@ export const teloConfigSchema = z.object({
     .default(DEFAULT_IGNORE_ROUTES)
     .describe(
       'HTTP routes to skip instrumenting (consumed by the instrumentations layer). ' +
-        'Defaults to the common liveness/readiness probe paths; passing a value replaces that list.',
+        'Defaults to the common liveness/readiness probe paths; passing a value replaces that list.'
     ),
 })
 
