@@ -88,13 +88,28 @@ services:
     image: grafana/grafana:11.5.0
     environment:
       - GF_SECURITY_ADMIN_USER=admin
+      # Setting the password explicitly suppresses Grafana's first-login forced
+      # change, so `admin` / `admin` works out of the box for local use.
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_AUTH_ANONYMOUS_ENABLED=false
     volumes:
       - grafana-data:/var/lib/grafana
+      # Datasources + dashboard-loader, applied on boot — zero manual setup.
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      # Drop-zone the dashboard loader watches; the JSON dashboards live here.
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
-      - '3000:3000' # Grafana UI (datasources/dashboards land in Days 6-7)
+      - '3000:3000' # Grafana UI
     networks: [telo]
+    # Wait for the backends so all three datasource health checks pass on first
+    # load instead of showing transient connection errors.
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
     healthcheck:
       test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:3000/api/health']
       interval: 10s

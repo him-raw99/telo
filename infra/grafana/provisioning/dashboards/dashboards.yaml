@@ -1,0 +1,18 @@
+# Dashboard loader — watches a drop-zone directory and loads any dashboard JSON
+# it finds into a single flat "Telo" folder. The drop-zone is filled with the
+# actual dashboards later; until then the provider simply has nothing to load.
+
+apiVersion: 1
+
+providers:
+  - name: Telo
+    orgId: 1
+    folder: Telo
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

@@ -10,7 +10,8 @@ import {
  * Only keys that are actually present are returned, so they slot in *under*
  * explicit `init()` arguments and *over* the schema defaults. `sampleRate` is
  * coerced to a number here; an unparseable value becomes `NaN` and is rejected
- * by the schema with the normal range error.
+ * by the schema with the normal range error. `TELO_IGNORE_ROUTES` is a
+ * comma-separated list, split into an array with blank entries dropped.
  */
 function fromEnv(): Partial<TTeloConfig> {
   const env = process.env
@@ -21,6 +22,11 @@ function fromEnv(): Partial<TTeloConfig> {
   if (env.TELO_ENV) out.env = env.TELO_ENV
   if (env.TELO_SAMPLE_RATE !== undefined && env.TELO_SAMPLE_RATE !== '') {
     out.sampleRate = Number(env.TELO_SAMPLE_RATE)
+  }
+  if (env.TELO_IGNORE_ROUTES !== undefined && env.TELO_IGNORE_ROUTES !== '') {
+    out.ignoreRoutes = env.TELO_IGNORE_ROUTES.split(',')
+      .map((route) => route.trim())
+      .filter((route) => route.length > 0)
   }
 
   return out

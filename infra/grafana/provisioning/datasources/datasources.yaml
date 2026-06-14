@@ -1,0 +1,57 @@
+# Grafana datasources, provisioned on boot — no manual setup. URLs use the
+# compose service DNS names, reachable on the shared `telo` network.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      httpMethod: POST
+
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      # Span → logs: jump from a span to its logs in Loki, filtered by the
+      # service and the trace ID. `service.name` (span/resource attr) maps to
+      # Loki's `service_name` structured-metadata field.
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: '-5m'
+        spanEndTimeShift: '5m'
+        filterByTraceID: true
+        filterBySpanID: false
+        tags:
+          - key: service.name
+            value: service_name
+      # Span → metrics and the service map both read from Prometheus.
+      tracesToMetrics:
+        datasourceUid: prometheus
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      # Log → trace: OTLP logs carry trace context as the `trace_id`
+      # structured-metadata field (not in the log body), so match on the label
+      # rather than a body regex. Click the field → open the trace in Tempo.
+      derivedFields:
+        - name: TraceID
+          matcherType: label
+          matcherRegex: trace_id
+          datasourceUid: tempo
+          url: '${__value.raw}'
+          urlDisplayLabel: View trace

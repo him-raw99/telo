@@ -4,6 +4,13 @@ import { z } from 'zod'
 const DEFAULT_ENDPOINT = 'http://localhost:4318'
 /** Trace sample rate used when the caller does not provide one (sample everything). */
 const DEFAULT_SAMPLE_RATE = 1.0
+/**
+ * Routes skipped by default — the conventional liveness/readiness probe paths.
+ * Probes fire every few seconds and carry no useful trace signal, so ignoring
+ * them out of the box keeps traces clean with zero configuration. Passing
+ * `ignoreRoutes` replaces this list rather than extending it.
+ */
+const DEFAULT_IGNORE_ROUTES = ['/health', '/healthz', '/ready', '/readyz', '/live', '/livez']
 
 /**
  * Runtime schema for Telo configuration.
@@ -18,7 +25,7 @@ const DEFAULT_SAMPLE_RATE = 1.0
  * - `endpoint`     → `http://localhost:4318`
  * - `env`          → `process.env.NODE_ENV` (falls back to `'unknown'`)
  * - `sampleRate`   → `1.0`
- * - `ignoreRoutes` → `[]`
+ * - `ignoreRoutes` → the conventional liveness/readiness probe paths
  */
 export const teloConfigSchema = z.object({
   service: z
@@ -45,8 +52,11 @@ export const teloConfigSchema = z.object({
 
   ignoreRoutes: z
     .array(z.string())
-    .default([])
-    .describe('HTTP routes to skip instrumenting (consumed by the instrumentations layer).'),
+    .default(DEFAULT_IGNORE_ROUTES)
+    .describe(
+      'HTTP routes to skip instrumenting (consumed by the instrumentations layer). ' +
+        'Defaults to the common liveness/readiness probe paths; passing a value replaces that list.',
+    ),
 })
 
 /**
@@ -59,7 +69,8 @@ export const teloConfigSchema = z.object({
  * @property endpoint     OTLP HTTP base URL. Default `http://localhost:4318`.
  * @property env          Deployment environment. Default `process.env.NODE_ENV`.
  * @property sampleRate   Root-span sample rate, 0..1. Default `1.0`.
- * @property ignoreRoutes HTTP routes to skip instrumenting. Default `[]`.
+ * @property ignoreRoutes HTTP routes to skip instrumenting. Defaults to the
+ *   common liveness/readiness probe paths; passing a value replaces that list.
  *
  * @example
  * ```ts
