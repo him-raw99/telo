@@ -1,0 +1,27 @@
+{
+  "name": "telo-express-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Example Express app instrumented with telo — exercises HTTP, Postgres, Redis, a manual span, a deliberate error, and OTel-Logs-API logging.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "deps:up": "docker compose up -d",
+    "deps:down": "docker compose down",
+    "start": "node --import ./instrument.mjs server.mjs",
+    "load": "node load.mjs"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/api-logs": "^0.218.0",
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0",
+    "telo": "file:../../packages/telo-node"
+  },
+  "devDependencies": {
+    "autocannon": "^8.0.0"
+  }
+}

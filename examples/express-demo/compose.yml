@@ -1,0 +1,35 @@
+# Postgres + Redis for the express demo. The app itself runs on the HOST
+# (`npm start`) and reaches these via published localhost ports — the same way
+# it reaches the collector at localhost:4318. Bring the observability backends
+# up separately from infra/ (see README).
+name: telo-express-demo
+
+volumes:
+  pg-data:
+
+services:
+  postgres:
+    image: postgres:17.2
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: demo
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.4
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
