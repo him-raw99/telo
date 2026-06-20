@@ -10,12 +10,31 @@ It exercises:
 - **Postgres** (`/users`) and **Redis** (`/cache`) auto-instrumentation.
 - A **manual `span()`** around custom work (`/work`).
 - A **deliberate 500** (`/error`) to drive error-rate metrics and the alert rule.
-- **Logs via the OTel Logs API**, emitted inside handlers so each record carries
-  the request's `trace_id` (telo has no log auto-bridge) — this is what makes the
-  trace↔log link work.
+- **Logs via plain `pino`**, auto-instrumented by telo: the logger is used
+  normally, and telo's pino instrumentation ships each record to Loki and injects
+  the request's `trace_id` — this is what makes the trace↔log link work. The lines
+  also print to stdout as usual.
 
 The app runs on the **host** and talks to dockerized backends over `localhost`,
 matching `TELO_ENDPOINT=http://localhost:4318`.
+
+## Why TypeScript compiled to CommonJS
+
+This example is written in TypeScript and **compiled to CommonJS** (`tsconfig.json`
+sets `"module": "commonjs"`; `npm start` runs the compiled `build/` output).
+
+That's deliberate. OpenTelemetry auto-instruments a library by patching it as it
+loads, and for libraries whose entry point is `module.exports = fn` — notably
+**pino** and **express** — that patch only lands when the module is `require()`d.
+Under native ESM (`.mjs` / `"type": "module"`), the loader uses
+`import-in-the-middle`, which **can't** patch that default-function export, so
+pino logging and express route spans silently never get instrumented (database
+and HTTP instrumentation still work, because they patch object/prototype members).
+
+Compiling to CommonJS turns the `import` source into `require()` at runtime, so
+`require-in-the-middle` patches everything — pino and express included. telo is
+loaded first via the `-r ./build/instrument.js` preload in `npm start`, before any
+instrumented library is required.
 
 ## Prerequisites
 
@@ -35,12 +54,13 @@ cd ../../infra && docker compose up -d
 # 2. Postgres + Redis for the demo
 cd ../examples/express-demo && npm run deps:up
 
-# 3. Install + start the app (preloads telo before Express/pg/redis)
+# 3. Install + start the app — `npm start` compiles TS → build/ then runs it,
+#    preloading telo via `-r ./build/instrument.js` before Express/pg/redis/pino
 npm install
 npm start
 # → express-demo listening on http://localhost:3001
 
-# 4. In another shell, generate traffic
+# 4. In another shell, generate traffic (also compiles first)
 npm run load
 ```
 

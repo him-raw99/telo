@@ -3,6 +3,7 @@ import { expressInstrumentation } from './express'
 import { dbInstrumentations } from './db'
 import { kafkaInstrumentation } from './kafka'
 import { amqpInstrumentation } from './amqp'
+import { loggingInstrumentations } from './logging'
 import { runtimeInstrumentation } from './runtime'
 
 import type { Instrumentation } from '@opentelemetry/instrumentation'
@@ -26,6 +27,7 @@ export function buildInstrumentations(config: TResolvedTeloConfig): Instrumentat
     ...dbInstrumentations(),
     kafkaInstrumentation(),
     amqpInstrumentation(),
+    ...loggingInstrumentations(),
     runtimeInstrumentation(),
   ]
 }

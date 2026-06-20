@@ -150,9 +150,17 @@ process.on('SIGTERM', async () => {
 
 On by default, patch-on-load (zero cost if the library isn't used): `http`/
 `https`, Express, Postgres (`pg`), MySQL (`mysql`/`mysql2`), Redis, Mongoose,
-Kafka (`kafkajs`), AMQP (`amqplib`), plus Node runtime metrics. `fs` is
-deliberately left off — too noisy to be useful. Which libraries are traced is
-fixed policy, not configuration.
+Kafka (`kafkajs`), AMQP (`amqplib`), plus Node runtime metrics. **`pino`** logs
+are bridged too — used normally, they ship to your OTLP endpoint with the active
+`trace_id` injected. `fs` is deliberately left off — too noisy to be useful.
+Which libraries are instrumented is fixed policy, not configuration.
+
+> **ESM caveat:** auto-instrumentation patches libraries as they're loaded. For
+> libraries exported as `module.exports = fn` — **pino** and **express** — that
+> patch only lands when they're `require()`d, i.e. under CommonJS (including
+> TypeScript compiled to CommonJS). Under native ESM the loader can't patch that
+> shape, so pino logging and express route spans won't be captured. See the
+> [express-demo](../../examples/express-demo) for the recommended setup.
 
 ## License
 

@@ -32,3 +32,6 @@ prometheus/data/
 specs
 
 settings.local.json
+
+# Local Claude Code guidance — kept out of the repo
+CLAUDE.md

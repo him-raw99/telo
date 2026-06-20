@@ -2,26 +2,30 @@
   "name": "telo-express-demo",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "description": "Example Express app instrumented with telo — exercises HTTP, Postgres, Redis, a manual span, a deliberate error, and OTel-Logs-API logging.",
+  "description": "Example Express app instrumented with telo — exercises HTTP, Postgres, Redis, a manual span, a deliberate error, and pino logging auto-bridged to OTel. Written in TypeScript and compiled to CommonJS so OpenTelemetry can auto-instrument pino/express (see README).",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
     "deps:up": "docker compose up -d",
     "deps:down": "docker compose down",
-    "start": "node --import ./instrument.mjs server.mjs",
-    "load": "node load.mjs"
+    "build": "tsc",
+    "start": "yarn build && node -r ./build/instrument.js build/server.js",
+    "load": "yarn build && node build/load.js"
   },
   "dependencies": {
-    "@opentelemetry/api": "^1.9.1",
-    "@opentelemetry/api-logs": "^0.218.0",
     "express": "^4.21.2",
     "pg": "^8.13.1",
+    "pino": "^9.5.0",
     "redis": "^4.7.0",
     "telo": "file:../../packages/telo-node"
   },
   "devDependencies": {
-    "autocannon": "^8.0.0"
+    "@types/autocannon": "^7.12.7",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "autocannon": "^8.0.0",
+    "typescript": "^5.7.2"
   }
 }

@@ -1,30 +1,26 @@
-// Example Express server instrumented by telo (loaded via instrument.mjs).
+// Example Express server instrumented by telo (telo boots first via the
+// `-r ./build/instrument.js` preload in `npm start`).
 //
 // Routes exercise every signal the dashboards chart:
 //   GET /            — liveness; ignored by telo's default ignoreRoutes
 //   GET /users       — Postgres query (pg auto-instrumentation)
 //   GET /cache       — Redis INCR (redis auto-instrumentation)
-//   GET /work        — a manual span() around custom work + an OTel log
+//   GET /work        — a manual span() around custom work + a pino log
 //   GET /error       — throws → 500, drives error-rate + the alert rule
 //
-// Logs are emitted through the OTel Logs API so each record carries the active
-// span's trace_id (telo has no log auto-bridge). Emitted inside a handler, the
-// record inherits the request span's context → Loki gets trace_id → the Day 6
-// derived field links the log back to its trace.
+// Logging uses plain pino. telo's pino auto-instrumentation (active because this
+// runs as CommonJS — see README) ships every record to the collector → Loki and
+// injects the active span's trace_id. Emitted inside a handler, the record
+// inherits the request span's context → Loki gets the trace_id → the derived
+// field links the log back to its trace. pino still writes to stdout as usual.
 import express from 'express'
+import type { NextFunction, Request, Response } from 'express'
 import pg from 'pg'
 import { createClient } from 'redis'
+import pino from 'pino'
 import { span } from 'telo'
-import { logs, SeverityNumber } from '@opentelemetry/api-logs'
 
-const logger = logs.getLogger('express-demo')
-
-function log(severityText, severityNumber, body, attributes) {
-  // Console line mirrors the OTel record so you can eyeball it locally — OTel
-  // logs ship to Loki and never hit stdout on their own.
-  console.log(`[${severityText}] ${body}`, attributes ?? '')
-  logger.emit({ severityText, severityNumber, body, attributes })
-}
+const logger = pino({ name: 'express-demo' })
 
 const PG_URL = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/demo'
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379'
@@ -34,7 +30,7 @@ const PORT = Number(process.env.PORT ?? 3001)
 // still boots and serves traffic while the DB is starting up. ---
 const pool = new pg.Pool({ connectionString: PG_URL, max: 5 })
 
-async function initDb(attempt = 1) {
+async function initDb(attempt = 1): Promise<void> {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL);
@@ -43,10 +39,10 @@ async function initDb(attempt = 1) {
     if (rows[0].n === 0) {
       await pool.query("INSERT INTO users (name) VALUES ('ada'), ('linus'), ('grace')")
     }
-    log('INFO', SeverityNumber.INFO, 'postgres ready')
+    logger.info('postgres ready')
   } catch (err) {
     if (attempt >= 10) {
-      console.error('postgres init failed after retries:', err.message)
+      logger.error({ error: (err as Error).message }, 'postgres init failed after retries')
       return
     }
     await new Promise((r) => setTimeout(r, 1000))
@@ -56,15 +52,15 @@ async function initDb(attempt = 1) {
 
 // --- Redis: connect lazily; tolerate it being down. ---
 const redis = createClient({ url: REDIS_URL })
-redis.on('error', (err) => console.error('redis error:', err.message))
+redis.on('error', (err: Error) => logger.warn({ error: err.message }, 'redis error'))
 
 const app = express()
 
-app.get('/', (_req, res) => {
+app.get('/', (_req: Request, res: Response) => {
   res.json({ ok: true })
 })
 
-app.get('/users', async (_req, res, next) => {
+app.get('/users', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const { rows } = await pool.query('SELECT id, name FROM users ORDER BY id')
     res.json(rows)
@@ -73,7 +69,7 @@ app.get('/users', async (_req, res, next) => {
   }
 })
 
-app.get('/cache', async (_req, res, next) => {
+app.get('/cache', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const hits = await redis.incr('demo:hits')
     res.json({ hits })
@@ -82,7 +78,7 @@ app.get('/cache', async (_req, res, next) => {
   }
 })
 
-app.get('/work', async (_req, res, next) => {
+app.get('/work', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     // Manual span around "custom work" — nests under the auto HTTP span.
     const result = await span(
@@ -91,37 +87,36 @@ app.get('/work', async (_req, res, next) => {
         await new Promise((r) => setTimeout(r, 25))
         return { computed: 42 }
       },
-      { attributes: { 'demo.kind': 'cpu' } },
+      { attributes: { 'demo.kind': 'cpu' } }
     )
-    log('INFO', SeverityNumber.INFO, 'did some heavy work', { computed: result.computed })
+    logger.info({ computed: result.computed }, 'did some heavy work')
     res.json(result)
   } catch (err) {
     next(err)
   }
 })
 
-app.get('/error', (_req, _res) => {
-  log('ERROR', SeverityNumber.ERROR, 'about to fail on purpose')
+app.get('/error', () => {
+  logger.error('about to fail on purpose')
   throw new Error('deliberate failure for the demo')
 })
 
 // Error handler → 500, so these requests land in the 5xx error-rate metric.
-// eslint-disable-next-line no-unused-vars
-app.use((err, _req, res, _next) => {
-  log('ERROR', SeverityNumber.ERROR, 'request failed', { error: err.message })
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  logger.error({ error: err.message }, 'request failed')
   res.status(500).json({ error: err.message })
 })
 
-async function main() {
+async function main(): Promise<void> {
   redis.connect().catch(() => {}) // non-fatal if Redis is down
   await initDb()
   const server = app.listen(PORT, () => {
-    console.log(`express-demo listening on http://localhost:${PORT}`)
+    logger.info({ port: PORT }, `express-demo listening on http://localhost:${PORT}`)
   })
 
   // Graceful shutdown: flush telemetry, then close.
   const { shutdown } = await import('telo')
-  const stop = async () => {
+  const stop = async (): Promise<void> => {
     server.close()
     await redis.quit().catch(() => {})
     await pool.end().catch(() => {})
@@ -132,4 +127,4 @@ async function main() {
   process.on('SIGTERM', stop)
 }
 
-main()
+void main()
