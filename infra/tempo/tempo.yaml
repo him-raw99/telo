@@ -1,6 +1,13 @@
 # Tempo — single-binary, filesystem-backed trace store. Receives traces from
 # the Collector over OTLP/gRPC and serves the query API on :3200.
 
+# Serve the streaming (gRPC) query API over the HTTP server on :3200. Grafana 11's
+# Tempo datasource streams TraceQL search/trace results by default and connects to
+# the datasource URL (http://tempo:3200); without this it speaks gRPC to the plain
+# HTTP port and fails with "error reading server preface: http2: frame too large",
+# which breaks trace search/view and therefore the log↔trace jumps.
+stream_over_http_enabled: true
+
 server:
   http_listen_port: 3200
   grpc_listen_port: 9095
