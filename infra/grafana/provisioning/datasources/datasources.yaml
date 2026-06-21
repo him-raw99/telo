@@ -27,9 +27,14 @@ datasources:
       # log body. The built-in `filterByTraceID` would inject a line filter
       # (`|= "<id>"`) that searches the body and therefore matches nothing, so we
       # supply a custom query that filters the structured-metadata field instead.
-      # `${__tags}` expands to the selector built from `tags` below. The `$` is
-      # doubled (`$$`) so Grafana's provisioning env-var interpolation leaves the
-      # literal `${...}` in place for trace-to-logs to expand at click time.
+      #
+      # The selector is `{service_name=~".+"}` rather than the `${__tags}` macro:
+      # `service.name` is a *resource* attribute, which the macro does not expand
+      # from, so `${__tags}` collapses to `{}` — an empty selector Loki rejects.
+      # Matching every service and narrowing by `trace_id` is also the correct
+      # semantics, since a trace can span multiple services. The `$` in the trace
+      # variable is doubled (`$$`) so Grafana's provisioning env-var interpolation
+      # leaves the literal `${...}` for trace-to-logs to expand at click time.
       tracesToLogsV2:
         datasourceUid: loki
         spanStartTimeShift: '-5m'
@@ -39,7 +44,7 @@ datasources:
         tags:
           - key: service.name
             value: service_name
-        query: '{$${__tags}} | trace_id=`$${__trace.traceId}`'
+        query: '{service_name=~".+"} | trace_id=`$${__trace.traceId}`'
       # Span → metrics and the service map both read from Prometheus.
       tracesToMetrics:
         datasourceUid: prometheus
