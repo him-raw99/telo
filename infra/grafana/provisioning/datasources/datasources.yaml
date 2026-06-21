@@ -21,16 +21,25 @@ datasources:
     jsonData:
       # Span → logs: jump from a span to its logs in Loki, filtered by the
       # service and the trace ID. `service.name` (span/resource attr) maps to
-      # Loki's `service_name` structured-metadata field.
+      # Loki's `service_name` indexed label.
+      #
+      # `trace_id` arrives from OTLP as Loki *structured metadata*, not in the
+      # log body. The built-in `filterByTraceID` would inject a line filter
+      # (`|= "<id>"`) that searches the body and therefore matches nothing, so we
+      # supply a custom query that filters the structured-metadata field instead.
+      # `${__tags}` expands to the selector built from `tags` below. The `$` is
+      # doubled (`$$`) so Grafana's provisioning env-var interpolation leaves the
+      # literal `${...}` in place for trace-to-logs to expand at click time.
       tracesToLogsV2:
         datasourceUid: loki
         spanStartTimeShift: '-5m'
         spanEndTimeShift: '5m'
-        filterByTraceID: true
+        filterByTraceID: false
         filterBySpanID: false
         tags:
           - key: service.name
             value: service_name
+        query: '{$${__tags}} | trace_id=`$${__trace.traceId}`'
       # Span → metrics and the service map both read from Prometheus.
       tracesToMetrics:
         datasourceUid: prometheus
